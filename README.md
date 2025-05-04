@@ -1,47 +1,57 @@
-# Reddit C2 Serverless - Shell Persistente
+# Reddit C2 Serverless - Persistent Shell
 
-## Descripción
+## 📘 Description
 
-Este proyecto implementa un sistema de **Command and Control (C2) Serverless** utilizando Reddit como canal de comunicación. 
+This project implements a **serverless Command and Control (C2)** framework leveraging Reddit as a covert communication channel.
 
-- **Serverless**: Sin infraestructura propia, utiliza Reddit como canal.
-- **Cifrado XOR + Base64**: Comunicaciones obfuscadas.
-- **Shell persistente**: Contexto mantenido entre comandos.
-- **Evasión**:
-  - User-Agent aleatorio.
-  - Sleep aleatorio para evitar detección anti-bot.
-  - Separadores invisibles para evitar bloqueos.
+- **Serverless**: Operates without self-hosted infrastructure by using Reddit as the transport layer.
+- **Obfuscated communications**: Commands and responses are XOR-encrypted and Base64-encoded.
+- **Persistent shell**: Maintains command context across sessions.
+- **Evasion techniques**:
+  - Randomized `User-Agent` headers.
+  - Random sleep intervals to bypass bot detection mechanisms.
+  - Invisible separators to circumvent platform restrictions.
 
-## Arquitectura
+---
 
-- 2 cuentas de Reddit:
-  - **Controlador** publica comandos.
-  - **Agente** monitoriza y responde.
-- Subreddit privado como canal.
-- Aplicaciones Reddit con API Keys para autenticación.
+## 🧱 Architecture
 
-## Archivos
+- **Two Reddit accounts**:
+  - **Controller**: Publishes encrypted commands.
+  - **Agent**: Monitors the subreddit and posts encrypted responses.
+- **Private subreddit**: Used as the covert communication channel.
+- **Reddit applications**: API keys are used for authentication and interaction.
 
-- `c2red.py`: Agente que ejecuta comandos en shell persistente.
-- `c2redlistener.py`: Controlador que envía comandos y recibe respuestas.
+---
 
-## Requisitos
+## 📂 Files
 
-- Python 3.7+
-- Librerías:
+| File               | Description                                      |
+|--------------------|--------------------------------------------------|
+| `c2red.py`         | Agent script that runs a persistent shell        |
+| `c2redlistener.py` | Controller script that sends commands and reads responses |
+
+---
+
+## 📦 Requirements
+
+- **Python**: Version 3.7 or higher
+- **Dependencies**:
   - `praw`
-  - `base64`
-  - `random`, `re`, `subprocess`, `threading`
+  - `base64` (built-in)
+  - `random`, `re`, `subprocess`, `threading` (built-in)
 
-## Instalación
+### Installation
 
 ```bash
 pip install praw
 ```
 
-## Configuración
+---
 
-Editar credenciales en ambos scripts:
+## ⚙️ Configuration
+
+Edit the following credentials in both scripts before running:
 
 ```python
 client_id = 'YOUR_CLIENT_ID'
@@ -50,31 +60,44 @@ username = 'YOUR_USERNAME'
 password = 'YOUR_PASSWORD'
 ```
 
-## Uso
+Ensure the Reddit app is configured as a **script** type for proper authentication.
 
-### 1. Ejecutar el agente
+---
+
+## 🚀 Usage
+
+### 1. Start the Agent
 
 ```bash
 python c2red.py
 ```
 
-### 2. Ejecutar el controlador
+### 2. Start the Controller
 
 ```bash
 python reddit_c2_shell.py
 ```
 
-### 3. Enviar comandos
+### 3. Send Commands
 
 ```bash
 > whoami
 > uname -a
 ```
 
-## Advertencia
+The agent will execute these within a persistent shell and return the output via subreddit comments.
 
-Este proyecto es solo para **fines educativos**. No se promueve su uso malicioso ni incluye medidas de **seguridad operacional** avanzadas.
+---
 
-## Licencia
+## ⚠️ Disclaimer
 
-Secra Solutions S.L. 2025 
+> This project is intended for **educational and research purposes only**.  
+> It is **not designed for malicious use** and **does not implement advanced operational security**.  
+> Use responsibly and within the bounds of the law.
+
+---
+
+## 📄 License
+
+**© Secra Solutions S.L. 2025**  
+All rights reserved.
